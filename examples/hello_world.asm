@@ -12,7 +12,7 @@ start:
 	jmp .loop               ; Next iteration of the loop
 
 halt:	hlt                     ; CPU command to halt the execution
-msg:	db "My name is Randomware: \n", 0   ; Our actual message to print
+msg:	db "My name is Randomware: ", 0   ; Our actual message to print
 
 ;; Magic numbers
 times 510 - ($ - $$) db 0

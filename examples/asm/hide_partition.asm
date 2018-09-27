@@ -8,7 +8,7 @@
 [bits 16]
 [org 0x0600]
 
-%define sector_storage 0x800
+%define sector_storage 0x1000
 
 _start:
     cli
@@ -19,6 +19,8 @@ _start:
     mov ss, ax                  ; stack segment = 0
     xor sp, sp                  ; stack pointer = 0
 
+    mov sp, 0x100
+
     mov di, 0x0600              ; new memory addr for this MBR
     mov si, 0x7c00              ; where this MBR is currently at
     mov cx, 0x0100              ; size of the MBR (0x100 = 256) but we are writing words
@@ -27,27 +29,28 @@ _start:
     jmp 0:_wipe_partition       ; jumps to new address starting at 0x600
 
 _wipe_partition:
-    sti
     lea di, [PART_1]
     lea si, [PART_4]
     mov cx, 0x10
 
     rep movsb
-    jmp 0:_read_sector
+    call _read_sector
+    hlt
 
 _read_sector:
-    mov al, 0x1                 ; # sectors to read
+    pusha
+    mov al, 0x5                 ; # sectors to read
     mov ch, 0x0                 ; cylinder to read from
-    mov cl, 0x2                 ; sector to read from
+    mov cl, 0x1                 ; sector to read from
     mov dh, 0x00                ; head to read from
-    mov dl, 0x80                ; read from the first hard drive
+    mov dl, 0x00                ; read from the first hard drive
     mov ax, sector_storage      ; where to store sectors we read
     mov es, ax
     mov bx, 0
     mov ah, 0x2                 ; code for specifying read sector
     int 0x13
-
-    jc _error_read
+    popa
+    ret
 
 _error_read:
     jmp 0:_halt

@@ -19,6 +19,10 @@ starts a debugging server at localhost:1234.
     target remote localhost:1234
 ```
 
+## Debugging reading sectors:
+* Put a breakpoint after the interrupt call (0x13).
+* Don't try to step through the interrupt using "ni".
+
 ## Some useful links:
 * https://blog.ghaiklor.com/how-to-implement-your-own-hello-world-boot-loader-c0210ef5e74b
 * https://stackoverflow.com/questions/14242958/debugging-bootloader-with-gdb-in-qemu

@@ -25,7 +25,7 @@ _start:
     mov si, 0x7c00              ; where this MBR is currently at
     mov cx, 0x0100              ; size of the MBR (0x100 = 256) but we are writing words
 
-    rep movsw                   ; copy the mbr to 0x600
+    rep movsw                   ; copy the mbr to 0x1000
     jmp 0:_reset_disk           ; jumps to new address starting at 0x600
 
 _reset_disk:

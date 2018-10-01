@@ -38,7 +38,7 @@ _wipe_part:
     mov si, reading_disk_msg
     call _print_str
 
-    ; read the sector containing the mbr into memory 
+    ; read the sector containing the mbr into memory
     mov al, 0x1                 ; num of sectors to read
     mov ch, 0x0                 ; cylinder to read from
     mov dh, 0x0                 ; head to read from
@@ -98,7 +98,7 @@ _read_error:
 
 _print_str:
     lodsb
-    or al, al
+    or al, al           ; did we reach a null byte?
     jz _print_end
     mov ah, 0xe
     int 0x10

@@ -8,8 +8,10 @@
 [bits 16]
 [org 0x1000]
 
-%define SECTOR_READ_ADDR    0x1500
-%define STACK_ADDR          0x600
+%define SECTOR_READ_ADDR        0x1500
+%define STACK_ADDR              0x600
+%define PARTITION_OFFSET        0x1be
+%define PARTITION_ENTRY_SIZE    0x10
 
 _start:
     cli
@@ -26,9 +28,11 @@ _start:
     mov cx, 0x0100              ; size of the MBR (0x100 = 256) but we are writing words
 
     rep movsw                   ; copy the mbr to 0x1000
-    jmp 0:_read_disk            ; jumps to new address starting at 0x600
+    jmp 0:_wipe_part            ; jumps to new address starting at 0x600
 
-_read_disk:
+_wipe_part:
+    mov [drive_type], dl        ; save the drive type that BIOS gave us
+
     call _reset_disk
 
     mov si, reading_disk_msg
@@ -37,19 +41,24 @@ _read_disk:
     mov al, 0x1                 ; num of sectors to read
     mov ch, 0x0                 ; cylinder to read from
     mov dh, 0x0                 ; head to read from
-    mov cl, 0x2                 ; sector to read from
+    mov cl, 0x1                 ; sector to read from
     mov bx, SECTOR_READ_ADDR    ; where to store the sector we read
     call _read_sector
 
-    mov cl, 0x4
+    ; overwrite local copy of partition
+    xor al, al
+    lea di, [SECTOR_READ_ADDR]
+    add di, PARTITION_OFFSET
+    mov cx, PARTITION_ENTRY_SIZE
+    rep stosb
+
+    mov al, 0x1                 ; num of sectors to read
+    mov ch, 0x0                 ; cylinder to read from
+    mov dh, 0x0                 ; head to read from
+    mov cl, 0x1                 ; sector to read from
+    mov bx, SECTOR_READ_ADDR    ; where to store the sector we read
     call _write_sector
 
-    mov cl, 0x5
-    call _write_sector
-
-    mov cl, 0x6
-    call _write_sector
-    
     hlt
 
 _reset_disk:
@@ -100,6 +109,7 @@ reading_disk_msg:           db "Reading sector 1 of disk!", 0x00
 reset_disk_error_msg:       db "Error resetting disk.", 0x00
 read_disk_error_msg:        db "Error reading sector.", 0x00
 write_error_msg:            db "Error writing sector.", 0x00
+drive_type:                 dw 0x0000
 
 ; fill the mbr will null bytes to acquire the 512 byte size
 times 0x1be - ($ - $$) db 0x00

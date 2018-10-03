@@ -8,7 +8,9 @@
 * dd if="drive" of=boot.bin bs=512 count=1
 
 ## Running this stuff:
-* nasm -f bin ???.asm -o boot.bin
+* Compile asm to mbr bin: nasm -f bin ???.asm -o ???.bin
+* Disassemble bin to asm: ndisasm -b16 -o7C00h ???.bin > ???.asm
+(can omit flag -07c00h to display assembly from 0x0000 instead of 0x7c00)
 * qemu-system-i386 -fda boot.bin -boot a -s -S
 * -s and -S pauses qemu allowing you to attach a debugger and also
 starts a debugging server at localhost:1234.

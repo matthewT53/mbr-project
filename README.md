@@ -8,6 +8,7 @@
 * dd if="drive" of=boot.bin bs=512 count=1
 
 ## Running this stuff:
+* nasm -f bin ???.asm -o boot.bin
 * qemu-system-i386 -fda boot.bin -boot a -s -S
 * -s and -S pauses qemu allowing you to attach a debugger and also
 starts a debugging server at localhost:1234.

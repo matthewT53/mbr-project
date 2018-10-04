@@ -6,12 +6,12 @@
 ;
 
 [bits 16]
-[org 0x600]
+[org 0x1000]
 
-%define NEW_MBR_ADDR        0x600
-%define TOP_OF_STACK        0x5000
-%define SECTOR_TWO_ADDR     0x1500
-%define VBR_ADDR            0x1800
+%define NEW_MBR_ADDR        0x1000
+%define VBR_ADDR            0x1200
+%define SECTOR_TWO_ADDR     0x1400
+%define TOP_OF_STACK        0x1600
 
 _start:
     cli
@@ -22,6 +22,7 @@ _start:
     mov ss, ax                  ; stack segment = 0
 
     mov sp, TOP_OF_STACK
+    push dl                     ; push dl onto the stack
 
     ; copy the mbr to another location
     mov di, NEW_MBR_ADDR
@@ -46,7 +47,6 @@ _load_sector_two:
 
 _scan_partitions:
     sti
-    mov [drive_type], dl
 
 _check_partition:
     mov bx, PART_1
@@ -61,10 +61,30 @@ _loop:
     jz _no_os_error
 
 _found_os:
-    mov [bootable_part], bx
+    ; construct the DAP packet 
+    mov ax, [bx + 11]
+    push ax
+    mov ax, [bx + 10]
+    push ax
+    mov ax, [bx + 9]
+    push ax
+    mov ax, [bx + 8]
+    push ax
 
-    ; read the OS's VBR and jump to it
-    
+    push 0x0
+    push VBR_ADDR
+
+    push 0x1
+    push 0x10
+
+    mov si, sp
+
+    ; we want to allign the stack
+    push 0x0
+    call _read_sector_lba
+
+    ; jump to the VBR
+
 
 _reset_disk:
     mov ah, 0x0
@@ -80,6 +100,12 @@ _read_sector:
 
 _write_sector:
     mov ah, 0x3
+    int 0x13
+    jc _disk_io_error
+    ret
+
+_read_sector_lba:
+    mov ah, 0x42
     int 0x13
     jc _disk_io_error
     ret
@@ -105,11 +131,8 @@ _print_str:
 _print_end:
     ret
 
-
 no_os_error_msg:            db "No operating system found!", 0x00
 disk_io_error_msg:          db "Disk IO error!", 0x00
-drive_type:                 db 0x00
-bootable_part:              dw 0x0000
 
 ; fill the mbr will null bytes to acquire the 512 byte size
 times 0x1be - ($ - $$) db 0x00

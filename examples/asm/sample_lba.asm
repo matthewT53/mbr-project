@@ -15,9 +15,6 @@ _start:
 
     mov sp, TOP_OF_STACK
 
-    ; save the drive type
-    mov [drive_type], dl
-
     ; copy the mbr to a new location
     mov di, NEW_MBR_ADDR
     mov si, 0x7c00
@@ -32,7 +29,7 @@ _read_lba:
     push 0x0
     push 0x0
     push 0x0
-    push 0x0
+    push 0x1
 
     push 0x0
     push READ_SECTOR_ADDR
@@ -41,7 +38,8 @@ _read_lba:
     push 0x10
 
     mov si, sp
-    mov dl, 0x80
+    ;mov dl, 0x80
+    push 0x0    ; pad the stack
     call _read_sector_lba
     hlt
 

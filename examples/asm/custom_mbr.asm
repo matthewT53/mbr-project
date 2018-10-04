@@ -8,10 +8,11 @@
 [bits 16]
 [org 0x1000]
 
-%define NEW_MBR_ADDR        0x1000
-%define VBR_ADDR            0x1200
-%define SECTOR_TWO_ADDR     0x1400
-%define TOP_OF_STACK        0x1600
+%define NEW_MBR_ADDR            0x1000
+%define VBR_ADDR                0x1200
+%define SECTOR_TWO_ADDR         0x1400
+%define TOP_OF_STACK            0x1600
+%define START_VBR_LBA_OFFSET    0x8
 
 _start:
     cli
@@ -22,7 +23,7 @@ _start:
     mov ss, ax                  ; stack segment = 0
 
     mov sp, TOP_OF_STACK
-    push dl                     ; push dl onto the stack
+    push dx                     ; push dl onto the stack
 
     ; copy the mbr to another location
     mov di, NEW_MBR_ADDR
@@ -61,15 +62,15 @@ _loop:
     jz _no_os_error
 
 _found_os:
-    ; construct the DAP packet 
-    mov ax, [bx + 11]
-    push ax
-    mov ax, [bx + 10]
-    push ax
-    mov ax, [bx + 9]
-    push ax
-    mov ax, [bx + 8]
-    push ax
+    pop dx
+
+    ; construct the DAP packet
+    ; there is probably a better way to do this
+    ; cant figure out how to push 4-bytes or 8 bytes
+    ; TODO: The code below will not work!
+    mov esi, DWORD [bx + START_VBR_LBA_OFFSET]
+    push DWORD 0x0
+    push esi
 
     push 0x0
     push VBR_ADDR
@@ -84,7 +85,7 @@ _found_os:
     call _read_sector_lba
 
     ; jump to the VBR
-
+    jmp 0:VBR_ADDR
 
 _reset_disk:
     mov ah, 0x0

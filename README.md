@@ -8,9 +8,15 @@
 * dd if="drive" of=boot.bin bs=512 count=1
 
 ## Running this stuff:
+### Option 1:
 * qemu-system-i386 -fda boot.bin -boot a -s -S
 * -s and -S pauses qemu allowing you to attach a debugger and also
 starts a debugging server at localhost:1234.
+
+### Option 2:
+* Use bochs on linux.
+* Follow the link below to setup:
+    * https://stechazine.blogspot.com/2013/03/how-to-setup-boch-32-emulator-in-ubuntu.html
 
 ## Attaching a debugger:
 * We chose to use GDB.

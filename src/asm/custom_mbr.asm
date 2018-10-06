@@ -11,7 +11,7 @@
 %define NEW_MBR_ADDR            0x1000
 %define VBR_ADDR                0x1200
 %define SECTOR_TWO_ADDR         0x1400
-%define TOP_OF_STACK            0x1600
+%define TOP_OF_STACK            0x2500
 %define START_VBR_LBA_OFFSET    0x8
 
 _start:
@@ -54,12 +54,13 @@ _check_partition:
     mov cx, 0x4
 
 _loop:
-    mov al, BYTE [PART_1]
+    mov al, BYTE [bx]
     cmp al, 0x80
     jz _found_os
     add bx, 0x10
     dec cx
     jz _no_os_error
+    jmp _loop
 
 _found_os:
     pop dx
@@ -81,7 +82,7 @@ _found_os:
     mov si, sp
 
     ; we want to allign the stack
-    push 0x0
+    ;push 0x0
     call _read_sector_lba
 
     ; jump to the VBR
@@ -139,8 +140,8 @@ disk_io_error_msg:          db "Disk IO error!", 0x00
 times 0x1be - ($ - $$) db 0x00
 
 ; partition table
-PART_1: times 16 db 0xaa
-PART_2: times 16 db 0xbb
+PART_1: db 0x80, 0x20, 0x21, 0x00, 0x07, 0xfe, 0xff, 0xff, 0x00, 0x08, 0x00, 0x00, 0x00, 0x30, 0x22, 0x07
+PART_2: db 0x00, 0xfe, 0xff, 0xff, 0x0c, 0xfe, 0xff, 0xff, 0x00, 0x38, 0x22, 0x07, 0x00, 0xb8, 0x5d, 0x00
 PART_3: times 16 db 0xcc
 PART_4: times 16 db 0xdd
 

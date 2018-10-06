@@ -43,12 +43,8 @@ _read_lba:
     ;push 0x0
     ;push 0x1
 
-    ;push DWORD 0x0
-    ;push DWORD 0x1
-    push 0xaabb
-    push 0xccdd
-    push 0xeeff
-    push 0xcdef
+    push DWORD 0x0
+    push DWORD 0x0
 
     push 0x0
     push READ_SECTOR_ADDR
@@ -58,7 +54,7 @@ _read_lba:
 
     ; at this point, dl = drive type
     mov si, sp
-    push 0x0    ; pad the stack
+    ;push 0x0    ; pad the stack
     call _read_sector_lba
     hlt
 

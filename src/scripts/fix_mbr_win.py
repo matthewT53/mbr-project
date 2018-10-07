@@ -26,9 +26,14 @@ def fix_mbr():
     fp = open(RESULT_FILE, "wb")
     fp.write(buf)
     fp.close()
+    return True
 
 #
 # Main program starts here.
 #
 
-fix_mbr()
+if fix_mbr():
+    print "Successfully fixed the custom mbr at:" + CUSTOM_MBR
+    print "Wrote the fixed version to: " + RESULT_FILE
+else:
+    print "Failed to fix the custom mbr at: " + CUSTOM_MBR

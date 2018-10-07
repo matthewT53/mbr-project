@@ -74,7 +74,7 @@ _check_extensions:
     mov ah, 0x41
     mov bx, 0x55aa
     int 0x13
-    jc _read_sector_chs
+    jc _read_with_chs
 
     ; construct the DAP packet
     mov bx, WORD [part_offset]

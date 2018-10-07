@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# this script extends the bootloader to have more sectors.
+
 SECTOR_SIZE = 512
 
 buf  = "a" * SECTOR_SIZE

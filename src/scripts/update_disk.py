@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+#
+# This script writes the compiled bootloader/mbr as well as some dummy sectors
+# directly onto a disk image without clearing the contents of the rest
+# of the image.
+#
+
 MBR_FILENAME    = "../bin/boot.bin"
 DISK_FILENAME   = "../bochsdbg/disk.img"
 SECTOR_SIZE     = 512

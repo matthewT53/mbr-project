@@ -6,12 +6,12 @@
 ;
 
 [bits 16]
-[org 0x1000]
+[org 0x600]
 
-%define NEW_MBR_ADDR            0x1000
-%define VBR_ADDR                0x1200
-%define SECTOR_TWO_ADDR         0x1400
-%define TOP_OF_STACK            0x2500
+%define NEW_MBR_ADDR            0x600
+%define VBR_ADDR                0x7c00
+%define SECTOR_TWO_ADDR         0x800
+%define TOP_OF_STACK            0x7c00
 %define START_VBR_LBA_OFFSET    0x8
 
 _start:
@@ -23,7 +23,6 @@ _start:
     mov ss, ax                  ; stack segment = 0
 
     mov sp, TOP_OF_STACK
-    push dx                     ; push dl onto the stack
 
     ; copy the mbr to another location
     mov di, NEW_MBR_ADDR
@@ -43,11 +42,14 @@ _load_sector_two:
     mov dh, 0x0                 ; head to read from
     mov cl, 0x2                 ; sector to read from
     mov bx, SECTOR_TWO_ADDR     ; where to store the sector we read
-    call _read_sector
+    call _read_sector_chs
     ret
 
 _scan_partitions:
     sti
+    mov [drive_type], dl
+    mov si, welcome_msg
+    call _print_str
 
 _check_partition:
     mov bx, PART_1
@@ -63,12 +65,19 @@ _loop:
     jmp _loop
 
 _found_os:
-    pop dx
+    mov dl, BYTE [drive_type]
+    mov WORD [part_offset], bx
+
+    call _reset_disk
+
+_check_extensions:
+    mov ah, 0x41
+    mov bx, 0x55aa
+    int 0x13
+    jc _read_sector_chs
 
     ; construct the DAP packet
-    ; there is probably a better way to do this
-    ; cant figure out how to push 4-bytes or 8 bytes
-    ; TODO: The code below will not work!
+    mov bx, WORD [part_offset]
     mov esi, DWORD [bx + START_VBR_LBA_OFFSET]
     push DWORD 0x0
     push esi
@@ -81,10 +90,26 @@ _found_os:
 
     mov si, sp
 
-    ; we want to allign the stack
-    ;push 0x0
+_read_with_lba:
     call _read_sector_lba
+    jmp _verify_vbr
 
+_read_with_chs:
+    mov bp, WORD [part_offset]
+    mov al, 0x1                     ; we want to read one sector
+    mov dh, BYTE [bp + 0x1]         ; head
+    mov ch, BYTE [bp + 0x2]         ; cylinder
+    mov cl, BYTE [bp + 0x3]         ; sector
+    mov bx, VBR_ADDR                ; addr to store the VBR
+    call _read_sector_chs
+
+_verify_vbr:
+    cmp WORD [VBR_ADDR + 0x1fe], 0xaa55
+    jne _read_wrong_sector_error
+
+_jump_vbr:
+    mov si, bx
+    xor dh, dh
     ; jump to the VBR
     jmp 0:VBR_ADDR
 
@@ -94,14 +119,8 @@ _reset_disk:
     jc _disk_io_error
     ret
 
-_read_sector:
-    mov ah, 0x2                 ; code for specifying reading sectors
-    int 0x13
-    jc _disk_io_error
-    ret
-
-_write_sector:
-    mov ah, 0x3
+_read_sector_chs:
+    mov ah, 0x2
     int 0x13
     jc _disk_io_error
     ret
@@ -112,19 +131,30 @@ _read_sector_lba:
     jc _disk_io_error
     ret
 
+_write_sector:
+    mov ah, 0x3
+    int 0x13
+    jc _disk_io_error
+    ret
+                                ; some error handling
 _no_os_error:
     mov si, no_os_error_msg
     call _print_str
-    hlt
+    jmp _end_loop
+
+_read_wrong_sector_error:
+    mov si, wrong_sector_msg
+    call _print_str
+    jmp _end_loop
 
 _disk_io_error:
     mov si, disk_io_error_msg
     call _print_str
-    hlt
+    jmp _end_loop
 
 _print_str:
     lodsb
-    or al, al           ; did we reach a null byte?
+    or al, al               ; did we reach a null byte?
     jz _print_end
     mov ah, 0xe
     int 0x10
@@ -133,17 +163,25 @@ _print_str:
 _print_end:
     ret
 
-no_os_error_msg:            db "No operating system found!", 0x00
-disk_io_error_msg:          db "Disk IO error!", 0x00
+_end_loop:                  ; after printing an error, we should just loop forever
+    jmp _end_loop
+
+welcome_msg:                db "My very own MBR!", 0x0a, 0x00
+wrong_sector_msg:           db "Read wrong sector, not a VBR!", 0x0a, 0x00
+no_os_error_msg:            db "No operating system found!", 0x0a, 0x00
+disk_io_error_msg:          db "Disk IO error!", 0x0a, 0x00
+
+drive_type:                 db 0x00
+part_offset:                dw 0x0000
 
 ; fill the mbr will null bytes to acquire the 512 byte size
 times 0x1be - ($ - $$) db 0x00
 
 ; partition table
-PART_1: db 0x80, 0x20, 0x21, 0x00, 0x07, 0xfe, 0xff, 0xff, 0x00, 0x08, 0x00, 0x00, 0x00, 0x30, 0x22, 0x07
-PART_2: db 0x00, 0xfe, 0xff, 0xff, 0x0c, 0xfe, 0xff, 0xff, 0x00, 0x38, 0x22, 0x07, 0x00, 0xb8, 0x5d, 0x00
-PART_3: times 16 db 0xcc
-PART_4: times 16 db 0xdd
+PART_1: db 0x80, 0x20, 0x21, 0x00, 0x07, 0xfe, 0xff, 0xff, 0x00, 0x08, 0x00, 0x00, 0x00, 0xf0, 0x7f, 0x07
+PART_2: times 16 db 0x00
+PART_3: times 16 db 0x00
+PART_4: times 16 db 0x00
 
 ; boot signature
 dw 0xaa55

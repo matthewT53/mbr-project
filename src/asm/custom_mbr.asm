@@ -31,8 +31,6 @@ _start:
 
     rep movsb
 
-    ;call _load_sector_two
-
     jmp 0:_scan_partitions
 
 _load_sector_two:
@@ -43,6 +41,8 @@ _load_sector_two:
     mov cl, 0x2                 ; sector to read from
     mov bx, SECTOR_TWO_ADDR     ; where to store the sector we read
     call _read_sector_chs
+
+    call 0:SECTOR_TWO_ADDR
     ret
 
 _scan_partitions:
@@ -50,6 +50,9 @@ _scan_partitions:
     mov [drive_type], dl
     mov si, welcome_msg
     call _print_str
+
+    ; loads the second sector and then jumps into it
+    call _load_sector_two
 
 _check_partition:
     mov bx, PART_1

@@ -15,12 +15,13 @@ _start:
     pusha
     call _reset_disk
 
-    ; zero out the second partition 
-    lea di, [NEW_MBR_ADDR + PART_2_OFFSET]
+    lea di, [NEW_MBR_ADDR + PART_2_OFFSET]  ; get MBR start address
     mov al, 0x00
     mov cx, 0x10
+
     rep stosb
 
+    ; write the local copy of the partition onto the disk
     mov al, 0x1                 ; we want to laod one sector
     mov ch, 0x0                 ; cylinder
     mov dh, 0x0                 ; head
@@ -62,4 +63,4 @@ _print_end:
 _end_loop:                  ; after printing an error, we should just loop forever
     jmp _end_loop
 
-disk_io_error_msg:          db "Disk IO error!", 0x0a, 0x00
+disk_io_error_msg:          db "[XOR] Disk IO error!", 0x0a, 0x00

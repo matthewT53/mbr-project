@@ -82,6 +82,7 @@ _check_extensions:
     ; construct the DAP packet
     mov bx, WORD [part_offset]
     mov esi, DWORD [bx + START_VBR_LBA_OFFSET]
+    
     push DWORD 0x0
     push esi
 
@@ -95,6 +96,8 @@ _check_extensions:
 
 _read_with_lba:
     call _read_sector_lba
+    add sp, 0x10
+
     jmp _verify_vbr
 
 _read_with_chs:

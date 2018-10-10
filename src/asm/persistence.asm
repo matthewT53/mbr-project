@@ -104,7 +104,7 @@ _process_vbr:
     add edi, eax
     mov DWORD [root_dir_lba_addr], edi
 
-add_root_dir_entry:
+_add_root_dir_entry:
     ; read in the root directory
     push DWORD 0x0
     push edi
@@ -143,7 +143,7 @@ add_root_dir_entry:
     call _write_sector_lba
     add sp, 0x10
 
-inject_data:
+_inject_data:
     ; copy data to the first cluster of the directory entry
     ; load sector 3 into RAM
     mov dl, BYTE [drive_type]
@@ -239,16 +239,16 @@ not_a_vbr:                  db "Not a fat vbr!", 0x0d, 0x0a, 0x00
 processing_fat_vbr_msg:     db "Processing FAT32 VBR!", 0x0d, 0x0a, 0x00
 disk_io_error_msg:          db "Disk IO error!", 0x0d, 0x0a, 0x00
 
-drive_type:              db 0x00
-sectors_per_cluster:     db 0x00
-start_of_fs_addr:        dd 0x00
-sectors_per_fat:         dd 0x00
-num_reserved_sectors:    dw 0x00
+drive_type:                 db 0x00
+sectors_per_cluster:        db 0x00
+start_of_fs_addr:           dd 0x00
+sectors_per_fat:            dd 0x00
+num_reserved_sectors:       dw 0x00
 
-root_dir_cluster_num:    dd 0x00
-root_dir_lba_addr:       dd 0x00
+root_dir_cluster_num:       dd 0x00
+root_dir_lba_addr:          dd 0x00
 
-root_dir_entry:          db 0x4D, 0x42, 0x52, 0x5F, 0x57, 0x49, 0x4E, 0x53, 0x54,
-                         db 0x58, 0x54, 0x20, 0x18, 0xC3, 0xF1, 0x81, 0x4A, 0x4D,
-                         db 0x4A, 0x4D ,0x00, 0x00, 0x18, 0x82, 0x4A, 0x4D, 0x03,
-                         db 0x00, 0x24, 0x00, 0x00, 0x00
+root_dir_entry:             db 0x4D, 0x42, 0x52, 0x5F, 0x57, 0x49, 0x4E, 0x53, 0x54,
+                            db 0x58, 0x54, 0x20, 0x18, 0xC3, 0xF1, 0x81, 0x4A, 0x4D,
+                            db 0x4A, 0x4D ,0x00, 0x00, 0x18, 0x82, 0x4A, 0x4D, 0x03,
+                            db 0x00, 0x24, 0x00, 0x00, 0x00

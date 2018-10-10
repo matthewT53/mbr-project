@@ -1,0 +1,29 @@
+#!/bin/sh
+
+if [ $# -lt 1 ]
+then
+	echo "Usage: ./init <name of asm without suffix> -p"
+	exit 0
+fi
+
+req_pwd="scripts"
+cur_pwd=$PWD
+
+if [ "${cur_pwd#*$req_pwd}" ]
+then
+	echo "This script must be run from the \"scripts\" directory"
+	exit 0
+fi
+
+nasm ../asm/$1.asm -f bin -o ../bin/$1.bin
+
+case "$2" in 
+	-p|--pause)
+		qemu-system-i386 -fda ../bin/$1.bin -s -S & 
+		gdb --command=../gdbcomms/gdbcomms.txt	
+		break
+		;;
+	*)
+		qemu-system-i386 -fda ../bin/$1.bin
+		;;
+esac

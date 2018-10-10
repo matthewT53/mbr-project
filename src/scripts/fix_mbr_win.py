@@ -5,7 +5,7 @@
 # since there are data bytes on the default mbr that need to be copied over
 #
 
-DEFAULT_WINDOWS_MBR = "../bin/usb_mbr.bin"
+DEFAULT_WINDOWS_MBR = "../bin/vm_mbr.bin"
 CUSTOM_MBR          = "../bin/boot.bin"
 RESULT_FILE         = "../bin/mbr_fixed.bin"
 

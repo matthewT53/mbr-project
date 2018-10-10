@@ -169,10 +169,10 @@ _print_end:
 _end_loop:                  ; after printing an error, we should just loop forever
     jmp _end_loop
 
-welcome_msg:                db "My very own MBR!", 0x0a, 0x00
-wrong_sector_msg:           db "Read wrong sector, not a VBR!", 0x0a, 0x00
-no_os_error_msg:            db "No operating system found!", 0x0a, 0x00
-disk_io_error_msg:          db "Disk IO error!", 0x0a, 0x00
+welcome_msg:                db "My very own MBR!", 0x0d, 0x0a, 0x00
+wrong_sector_msg:           db "Read wrong sector, not a VBR!", 0x0d, 0x0a, 0x00
+no_os_error_msg:            db "No operating system found!", 0x0d, 0x0a, 0x00
+disk_io_error_msg:          db "Disk IO error!", 0x0d, 0x0a, 0x00
 
 drive_type:                 db 0x00
 part_offset:                dw 0x0000

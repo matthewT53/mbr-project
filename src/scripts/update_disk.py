@@ -6,7 +6,7 @@
 # of the image.
 #
 
-MBR_FILENAME        = "../bin/boot.bin"
+MBR_FILENAME        = "../bin/mbr_fixed.bin"
 PAYLOAD_FILENAME    = "../bin/payload.bin"
 DISK_FILENAME       = "../bochsdbg/disk.img"
 SECTOR_SIZE         = 512

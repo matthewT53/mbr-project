@@ -11,11 +11,14 @@
 ; taken from custom_mbr.asm
 %define SECTOR_TWO_ADDR     0x800
 %define NEW_MBR_ADDR        0x600
+
 %define FAT32_VBR_ADDR      0x1000
+%define ROOT_DIR_ADDR       0x1200
+%define SECTOR_THREE_ADDR   0x1400
 
 ; offsets into the master boot record
 %define MBR_PART_OFFSET         0x1be
-%define PART_TYPE_OFFSET        0x2
+%define PART_TYPE_OFFSET        0x4
 %define PART_START_LBA_OFFSET   0x8
 
 ; offsets into the FAT32 VBR
@@ -47,8 +50,8 @@ _load_fat_vbr:
     mov DWORD [start_of_fs_addr], esi
 
     sub sp, 0x10
-    push esi
     push DWORD 0x0
+    push esi
 
     push 0x0
     push FAT32_VBR_ADDR
@@ -90,19 +93,31 @@ _process_vbr:
 
     ; add 2 * sectors_per_fat
     mov ecx, DWORD [sectors_per_fat]
-    mov eax, 2
+    mov eax, 2                          ; assume there are 2 FAT tables
     mul ecx                             ; result is stored in edx:aax
 
     add edi, eax
 
     ; read in the root directory
+    sub sp, 0x10
+    push DWORD 0x0
+    push edi
 
+    push 0x0
+    push ROOT_DIR_ADDR
 
+    push 0x1
+    push 0x10
+    mov si, sp
+
+    call _read_sector_lba
+    add sp, 0x10
+    
     ; add en entry into the root directory
 
     ; copy back the modified root directory
 
-    ; copy data to the first cluster of the directory entry 
+    ; copy data to the first cluster of the directory entry
 
 _end:
     popa

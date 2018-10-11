@@ -16,6 +16,9 @@
 %define ROOT_DIR_ADDR       0x1200
 %define SECTOR_THREE_ADDR   0x1400
 
+%define FAT_TABLE_ONE_ADDR  0x1600
+%define FAT_TABLE_TWO_ADDR  0x1800
+
 ; offsets into the master boot record
 %define MBR_PART_OFFSET         0x1be
 %define PART_TYPE_OFFSET        0x4
@@ -93,6 +96,9 @@ _process_vbr:
     mov cx, WORD [num_reserved_sectors]
     add edi, ecx
 
+    ; store the address of the first fat table
+    mov DWORD [fat1_addr], edi
+
     ; add 2 * sectors_per_fat
     mov ecx, DWORD [sectors_per_fat]
     mov eax, 2                          ; assume there are only 2 FAT tables
@@ -121,7 +127,7 @@ _add_root_dir_entry:
     call _print_str
 
     ; add en entry into the root directory
-    lea esi, [root_dir_entry]
+    lea esi, [NEW_MBR_ADDR + 0x155]
     lea edi, [ROOT_DIR_ADDR + NEW_ENTRY_OFFSET]
     mov cx, 0x20
 
@@ -188,6 +194,62 @@ _inject_data:
     call _write_sector_lba
     add sp, 0x10
 
+    ; add an entry into the FAT table for cluster 3
+    ; read first fat table
+    mov edi, DWORD [fat1_addr]
+
+    push DWORD 0x0
+    push edi
+
+    push 0x0
+    push FAT_TABLE_ONE_ADDR
+
+    push 0x1
+    push 0x10
+
+    mov si, sp
+    call _read_sector_lba
+    add sp, 0x10
+
+    ; add the entry into the FAT table
+    mov eax, DWORD [fat_entry]
+    mov DWORD [FAT_TABLE_ONE_ADDR + 0xc], eax
+
+    ; write changes to fat1 on disk
+    push DWORD 0x0
+    push edi
+
+    push 0x0
+    push FAT_TABLE_ONE_ADDR
+
+    push 0x1
+    push 0x10
+
+    xor eax, eax
+
+    mov si, sp
+    call _write_sector_lba
+    add sp, 0x10
+
+    mov eax, DWORD [sectors_per_fat]
+    add edi, eax
+
+    ; write changes to fat2 on disk
+    push DWORD 0x0
+    push edi
+
+    push 0x0
+    push FAT_TABLE_ONE_ADDR
+
+    push 0x1
+    push 0x10
+
+    xor eax, eax
+
+    mov si, sp
+    call _write_sector_lba
+    add sp, 0x10
+
 _end:
     popa
     retf
@@ -239,10 +301,10 @@ _print_end:
 _end_loop:                  ; after printing an error, we should just loop forever
     jmp _end_loop
 
-no_fat_found_msg:           db "No fat partition found!", 0x0d, 0x0a, 0x00
-not_a_vbr:                  db "Not a fat vbr!", 0x0d, 0x0a, 0x00
-processing_fat_vbr_msg:     db "Processing FAT32 VBR!", 0x0d, 0x0a, 0x00
-disk_io_error_msg:          db "Disk IO error!", 0x0d, 0x0a, 0x00
+no_fat_found_msg:           db "a", 0x0d, 0x0a, 0x00
+not_a_vbr:                  db "b", 0x0d, 0x0a, 0x00
+processing_fat_vbr_msg:     db "c", 0x0d, 0x0a, 0x00
+disk_io_error_msg:          db "d", 0x0d, 0x0a, 0x00
 
 drive_type:                 db 0x00
 sectors_per_cluster:        db 0x00
@@ -253,7 +315,5 @@ num_reserved_sectors:       dw 0x00
 root_dir_cluster_num:       dd 0x00
 root_dir_lba_addr:          dd 0x00
 
-root_dir_entry:             db 0x4D, 0x42, 0x52, 0x5F, 0x57, 0x49, 0x4E, 0x53, 0x54,
-                            db 0x58, 0x54, 0x20, 0x18, 0xC3, 0xF1, 0x81, 0x4A, 0x4D,
-                            db 0x4A, 0x4D ,0x00, 0x00, 0x18, 0x82, 0x4A, 0x4D, 0x03,
-                            db 0x00, 0x24, 0x00, 0x00, 0x00
+fat1_addr:                  dd 0x00
+fat_entry:                  db 0xff, 0xff, 0xff, 0x0f

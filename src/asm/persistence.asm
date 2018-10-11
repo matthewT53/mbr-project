@@ -9,20 +9,26 @@
 
 ; memory addresses
 ; taken from custom_mbr.asm
-%define SECTOR_TWO_ADDR     0x800
-%define NEW_MBR_ADDR        0x600
+%define SECTOR_TWO_ADDR                 0x800
+%define NEW_MBR_ADDR                    0x600
 
-%define FAT32_VBR_ADDR      0x1000
-%define ROOT_DIR_ADDR       0x1200
-%define SECTOR_THREE_ADDR   0x1400
+%define FAT32_VBR_ADDR                  0x1000
+%define ROOT_DIR_ADDR                   0x1200
+%define SECTOR_THREE_ADDR               0x1400
 
-%define FAT_TABLE_ONE_ADDR  0x1600
-%define FAT_TABLE_TWO_ADDR  0x1800
+%define FAT_TABLE_ONE_ADDR              0x1600
 
 ; offsets into the master boot record
-%define MBR_PART_OFFSET         0x1be
-%define PART_TYPE_OFFSET        0x4
-%define PART_START_LBA_OFFSET   0x8
+%define MBR_PART_OFFSET                 0x1be
+
+; The fat table entry is stored in the custom_mbr.asm because there
+; is not enough space in this file.
+%define FAT_ENTRY_DATA_OFFSET           0x155
+%define FAT_TABLE_ENTRY_OFFSET          0xc
+
+; offsets in the partition entry structure
+%define PART_TYPE_OFFSET                0x4
+%define PART_START_LBA_OFFSET           0x8
 
 ; offsets into the FAT32 VBR
 %define SECTORS_PER_CLUSTER_OFFSET      0x0d    ; 1 byte
@@ -127,7 +133,7 @@ _add_root_dir_entry:
     call _print_str
 
     ; add en entry into the root directory
-    lea esi, [NEW_MBR_ADDR + 0x155]
+    lea esi, [NEW_MBR_ADDR + FAT_ENTRY_DATA_OFFSET]
     lea edi, [ROOT_DIR_ADDR + NEW_ENTRY_OFFSET]
     mov cx, 0x20
 
@@ -213,7 +219,7 @@ _inject_data:
 
     ; add the entry into the FAT table
     mov eax, DWORD [fat_entry]
-    mov DWORD [FAT_TABLE_ONE_ADDR + 0xc], eax
+    mov DWORD [FAT_TABLE_ONE_ADDR + FAT_TABLE_ENTRY_OFFSET], eax
 
     ; write changes to fat1 on disk
     push DWORD 0x0

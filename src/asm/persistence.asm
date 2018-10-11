@@ -73,9 +73,6 @@ _check_extensions:
     jnz _not_a_vbr_handler
 
 _process_vbr:
-    mov si, processing_fat_vbr_msg
-    call _print_str
-
     mov al, BYTE [FAT32_VBR_ADDR + SECTORS_PER_CLUSTER_OFFSET]
     mov BYTE [sectors_per_cluster], al
 
@@ -119,6 +116,9 @@ _add_root_dir_entry:
     mov dl, BYTE [drive_type]
     call _read_sector_lba
     add sp, 0x10
+
+    mov si, processing_fat_vbr_msg
+    call _print_str
 
     ; add en entry into the root directory
     lea esi, [root_dir_entry]
@@ -166,7 +166,7 @@ _inject_data:
     mov esi, edi
     xor eax, eax
     mov al, BYTE [sectors_per_cluster]
-    mov ecx, 2
+    mov ecx, 1
     mul ecx
     add esi, eax
 
@@ -255,5 +255,5 @@ root_dir_lba_addr:          dd 0x00
 
 root_dir_entry:             db 0x4D, 0x42, 0x52, 0x5F, 0x57, 0x49, 0x4E, 0x53, 0x54,
                             db 0x58, 0x54, 0x20, 0x18, 0xC3, 0xF1, 0x81, 0x4A, 0x4D,
-                            db 0x4A, 0x4D ,0x00, 0x00, 0x18, 0x82, 0x4A, 0x4D, 0x04,
+                            db 0x4A, 0x4D ,0x00, 0x00, 0x18, 0x82, 0x4A, 0x4D, 0x03,
                             db 0x00, 0x24, 0x00, 0x00, 0x00

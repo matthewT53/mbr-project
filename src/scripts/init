@@ -2,7 +2,7 @@
 
 if [ $# -lt 1 ]
 then
-	echo "Usage: ./init <name of asm without suffix> -p"
+	echo "Usage: ./$0 <name of asm without suffix> -p"
 	exit 0
 fi
 

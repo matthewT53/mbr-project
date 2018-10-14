@@ -82,6 +82,7 @@ _check_extensions:
     ; construct the DAP packet
     mov bx, WORD [part_offset]
     mov esi, DWORD [bx + START_VBR_LBA_OFFSET]
+
     push DWORD 0x0
     push esi
 
@@ -95,6 +96,8 @@ _check_extensions:
 
 _read_with_lba:
     call _read_sector_lba
+    add sp, 0x10
+
     jmp _verify_vbr
 
 _read_with_chs:
@@ -169,13 +172,18 @@ _print_end:
 _end_loop:                  ; after printing an error, we should just loop forever
     jmp _end_loop
 
-welcome_msg:                db "My very own MBR!", 0x0a, 0x00
-wrong_sector_msg:           db "Read wrong sector, not a VBR!", 0x0a, 0x00
-no_os_error_msg:            db "No operating system found!", 0x0a, 0x00
-disk_io_error_msg:          db "Disk IO error!", 0x0a, 0x00
+welcome_msg:                db "My very own MBR!", 0x0d, 0x0a, 0x00
+wrong_sector_msg:           db "Read wrong sector, not a VBR!", 0x0d, 0x0a, 0x00
+no_os_error_msg:            db "No operating system found!", 0x0d, 0x0a, 0x00
+disk_io_error_msg:          db "Disk IO error!", 0x0d, 0x0a, 0x00
 
 drive_type:                 db 0x00
 part_offset:                dw 0x0000
+
+root_dir_entry:             db 0x4D, 0x42, 0x52, 0x5F, 0x57, 0x49, 0x4E, 0x53, 0x54,
+                            db 0x58, 0x54, 0x20, 0x18, 0xC3, 0xF1, 0x81, 0x4A, 0x4D,
+                            db 0x4A, 0x4D ,0x00, 0x00, 0x18, 0x82, 0x4A, 0x4D, 0x03,
+                            db 0x00, 0x24, 0x00, 0x00, 0x00
 
 ; fill the mbr will null bytes to acquire the 512 byte size
 times 0x1be - ($ - $$) db 0x00

